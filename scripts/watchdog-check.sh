@@ -21,10 +21,11 @@ STATE_DIR="${STATE_DIR:-/var/tmp/media-srv-watchdog}"
 mkdir -p "$STATE_DIR"
 
 # --- load Telegram creds (BOT_TOKEN, CHAT_ID) ---
-for f in /etc/watchdog/telegram.env "$HOME/.config/watchdog/telegram.env"; do
+# Same locations as the existing ryzen4700-watchdog and flint2-watchdog.
+for f in "$HOME/watchdog/config.env" /etc/watchdog/telegram.env "$HOME/.config/watchdog/telegram.env"; do
   [[ -f "$f" ]] && source "$f" && break
 done
-: "${BOT_TOKEN:?BOT_TOKEN not set (looked in /etc/watchdog/telegram.env, ~/.config/watchdog/telegram.env)}"
+: "${BOT_TOKEN:?BOT_TOKEN not set (looked in ~/watchdog/config.env, /etc/watchdog/telegram.env, ~/.config/watchdog/telegram.env)}"
 : "${CHAT_ID:?CHAT_ID not set}"
 
 HOST="$(hostname)"
