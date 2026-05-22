@@ -1,0 +1,6 @@
+.env
+.env.local
+*.local
+secrets/
+data/
+.DS_Store
