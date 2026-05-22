@@ -163,4 +163,4 @@ crontab -e
 # * * * * * /usr/local/bin/media-srv-watchdog
 ```
 
-It uses `/etc/watchdog/telegram.env` (or `~/.config/watchdog/telegram.env`) for `BOT_TOKEN` + `CHAT_ID`. Reuse what the existing watchdog uses.
+It uses `~/watchdog/config.env` (the same file as the existing ryzen4700-watchdog) for `BOT_TOKEN` + `CHAT_ID`. No new credential file needed — just reuse what's already there.
