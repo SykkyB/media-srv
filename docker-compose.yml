@@ -1,0 +1,127 @@
+name: media-srv
+
+networks:
+  media:
+    name: media
+    driver: bridge
+
+volumes:
+  jellyfin_cache:
+
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    user: ${PUID}:${PGID}
+    group_add:
+      - ${RENDER_GID}
+    devices:
+      - /dev/dri:/dev/dri
+    environment:
+      - TZ=${TZ}
+    ports:
+      - 8096:8096
+    volumes:
+      - ${APPDATA}/jellyfin:/config
+      - ${MEDIA}/movies:/data/movies:ro
+      - ${MEDIA}/tv:/data/tv:ro
+      - jellyfin_cache:/cache
+    networks:
+      - media
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - WEBUI_PORT=8080
+    ports:
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+    volumes:
+      - ${APPDATA}/qbittorrent:/config
+      - ${MEDIA}/downloads:/data/downloads
+    networks:
+      - media
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    ports:
+      - 9696:9696
+    volumes:
+      - ${APPDATA}/prowlarr:/config
+    networks:
+      - media
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    ports:
+      - 8989:8989
+    volumes:
+      - ${APPDATA}/sonarr:/config
+      - ${MEDIA}:/data
+    networks:
+      - media
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    ports:
+      - 7878:7878
+    volumes:
+      - ${APPDATA}/radarr:/config
+      - ${MEDIA}:/data
+    networks:
+      - media
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    ports:
+      - 6767:6767
+    volumes:
+      - ${APPDATA}/bazarr:/config
+      - ${MEDIA}:/data
+    networks:
+      - media
+
+  overseerr:
+    image: sctx/overseerr:latest
+    container_name: overseerr
+    restart: unless-stopped
+    environment:
+      - LOG_LEVEL=info
+      - TZ=${TZ}
+    ports:
+      - 5055:5055
+    volumes:
+      - ${APPDATA}/overseerr:/app/config
+    networks:
+      - media
