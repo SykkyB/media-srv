@@ -37,6 +37,9 @@ CHAT_ID="${CHAT_ID:-${TG_CHAT_ID:-}}"
 HOST="${HOST_LABEL:-$(hostname)}"
 SOURCE="media-srv (docker+http probe)"
 SEP="━━━━━━━━━━━━━━━━"
+# Force a sensible local TZ for timestamps even if the host is UTC.
+# Honour explicit TZ_NAME from watchdog config.env if present.
+TZ_NAME="${TZ_NAME:-Asia/Tbilisi}"
 
 # --- Telegram card sender ---
 # Args: 1=status (down|up|warn), 2=service/label, 3=detail line
@@ -49,7 +52,7 @@ send_card() {
     warn) icon="⚠️"; title="DISK ALERT — INTERNAL" ;;
     *)    icon="ℹ️"; title="NOTICE — INTERNAL" ;;
   esac
-  local ts; ts="$(date '+%Y-%m-%d %H:%M:%S %Z')"
+  local ts; ts="$(TZ="$TZ_NAME" date '+%Y-%m-%d %H:%M:%S %Z')"
   local text
   text="${icon} <b>${title}</b> (media-srv)
 ${SEP}
@@ -95,12 +98,16 @@ for svc in "${SERVICES[@]}"; do
     transition "$svc" down "container not running"
     continue
   fi
-  # 2) HTTP probe (accept 2xx/3xx, plus 401/403 which still mean "up")
+  # 2) HTTP probe (accept 2xx/3xx, plus 401/403 which still mean "up").
+  # Note: no -f flag so curl still writes the code on non-2xx; we want to see it.
   url="${HTTP_PROBES[$svc]:-}"
   if [[ -n "$url" ]]; then
-    code="$(curl -fsS -o /dev/null -w '%{http_code}' --max-time 5 "$url" 2>/dev/null || echo 000)"
+    code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 "$url" 2>/dev/null || true)"
+    [[ -z "$code" ]] && code="000"
     if [[ "$code" =~ ^(2|3)[0-9][0-9]$ ]] || [[ "$code" == "401" ]] || [[ "$code" == "403" ]]; then
       transition "$svc" ok ""
+    elif [[ "$code" == "000" ]]; then
+      transition "$svc" down "no HTTP response on ${url} (container starting or port closed)"
     else
       transition "$svc" down "HTTP ${code} on ${url}"
     fi
