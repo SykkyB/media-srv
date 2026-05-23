@@ -36,6 +36,19 @@ sudo chown -R sykkyb:sykkyb /opt/appdata
 sudo apt install -y vainfo mesa-va-drivers
 sudo usermod -aG render,video sykkyb   # log out + back in for groups to apply
 getent group render                    # note the GID → RENDER_GID in .env
+
+# Host-wide Docker log rotation — applies to media-srv + immich + everything else.
+# Without this json-file logs grow unbounded.
+sudo tee /etc/docker/daemon.json > /dev/null <<'EOF'
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
+}
+EOF
+sudo systemctl restart docker
 ```
 
 ## 2. Clone and configure
