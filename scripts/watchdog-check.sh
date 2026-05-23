@@ -20,15 +20,18 @@ declare -A HTTP_PROBES=(
 STATE_DIR="${STATE_DIR:-/var/tmp/media-srv-watchdog}"
 mkdir -p "$STATE_DIR"
 
-# --- load Telegram creds (BOT_TOKEN, CHAT_ID) ---
-# Same locations as the existing ryzen4700-watchdog and flint2-watchdog.
+# --- load Telegram creds ---
+# The existing ryzen4700-watchdog uses TG_TOKEN / TG_CHAT_ID / HOST_LABEL.
+# Accept either TG_* or BOT_TOKEN/CHAT_ID names so either schema works.
 for f in "$HOME/watchdog/config.env" /etc/watchdog/telegram.env "$HOME/.config/watchdog/telegram.env"; do
   [[ -f "$f" ]] && source "$f" && break
 done
-: "${BOT_TOKEN:?BOT_TOKEN not set (looked in ~/watchdog/config.env, /etc/watchdog/telegram.env, ~/.config/watchdog/telegram.env)}"
-: "${CHAT_ID:?CHAT_ID not set}"
+BOT_TOKEN="${BOT_TOKEN:-${TG_TOKEN:-}}"
+CHAT_ID="${CHAT_ID:-${TG_CHAT_ID:-}}"
+: "${BOT_TOKEN:?BOT_TOKEN/TG_TOKEN not set (looked in ~/watchdog/config.env, /etc/watchdog/telegram.env, ~/.config/watchdog/telegram.env)}"
+: "${CHAT_ID:?CHAT_ID/TG_CHAT_ID not set}"
 
-HOST="$(hostname)"
+HOST="${HOST_LABEL:-$(hostname)}"
 
 notify() {
   local msg="$1"
