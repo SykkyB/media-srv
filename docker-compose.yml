@@ -125,3 +125,14 @@ services:
       - ${APPDATA}/jellyseerr:/app/config
     networks:
       - media
+
+  searcharr:
+    image: toddrob/searcharr:latest
+    container_name: searcharr
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA}/searcharr:/app/data
+    networks:
+      - media
