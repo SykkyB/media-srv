@@ -8,6 +8,13 @@ networks:
 volumes:
   jellyfin_cache:
 
+# Common health probe knobs (referenced via YAML anchors below).
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 30s
+  timeout: 5s
+  retries: 3
+  start_period: 60s
+
 services:
   jellyfin:
     image: jellyfin/jellyfin:latest
@@ -29,6 +36,14 @@ services:
       - jellyfin_cache:/cache
     networks:
       - media
+    # Jellyfin image ships its own HEALTHCHECK — don't override.
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "4.0"
+        reservations:
+          memory: 512M
 
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
@@ -48,6 +63,16 @@ services:
       - ${MEDIA}/downloads:/data/downloads
     networks:
       - media
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "curl -fsS --max-time 3 http://localhost:8080/api/v2/app/version || exit 1"]
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+        reservations:
+          memory: 256M
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
@@ -63,6 +88,16 @@ services:
       - ${APPDATA}/prowlarr:/config
     networks:
       - media
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "curl -fsS --max-time 3 http://localhost:9696/ping || exit 1"]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
@@ -79,6 +114,16 @@ services:
       - ${MEDIA}:/data
     networks:
       - media
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "curl -fsS --max-time 3 http://localhost:8989/ping || exit 1"]
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 256M
 
   radarr:
     image: lscr.io/linuxserver/radarr:latest
@@ -95,6 +140,16 @@ services:
       - ${MEDIA}:/data
     networks:
       - media
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "curl -fsS --max-time 3 http://localhost:7878/ping || exit 1"]
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 256M
 
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
@@ -111,6 +166,16 @@ services:
       - ${MEDIA}:/data
     networks:
       - media
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "curl -fsS --max-time 3 http://localhost:6767/ || exit 1"]
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
 
   jellyseerr:
     image: fallenbagel/jellyseerr:latest
@@ -125,6 +190,16 @@ services:
       - ${APPDATA}/jellyseerr:/app/config
     networks:
       - media
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "wget -qO- --timeout=3 http://localhost:5055/api/v1/status >/dev/null || exit 1"]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
 
   searcharr:
     image: toddrob/searcharr:latest
@@ -136,3 +211,11 @@ services:
       - ${APPDATA}/searcharr:/app/data
     networks:
       - media
+    # No HTTP interface — relying on docker's "running" state via watchdog.
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+        reservations:
+          memory: 64M
