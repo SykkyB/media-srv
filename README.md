@@ -1,6 +1,6 @@
 # media-srv
 
-Self-hosted media stack on `home-server` (Ryzen 4700U): Jellyfin + Sonarr/Radarr/Prowlarr/Bazarr + qBittorrent + Overseerr.
+Self-hosted media stack on `home-server` (Ryzen 4700U): Jellyfin + Sonarr/Radarr/Prowlarr/Bazarr + qBittorrent + Jellyseerr.
 
 Configs on NVMe (`/opt/appdata`), media on WD My Passport 2TB mounted at `/mnt/media` (ext4). Single filesystem under `/mnt/media` so Sonarr/Radarr can hardlink instead of copy.
 
@@ -25,7 +25,7 @@ Inside containers: `/mnt/media` is mounted as `/data` for *arr/qBit. Jellyfin se
 | Sonarr      | 8989 |
 | Radarr      | 7878 |
 | Bazarr      | 6767 |
-| Overseerr   | 5055 |
+| Jellyseerr   | 5055 |
 
 Access only via LAN / WireGuard (vpn.sys-lab.xyz). No public exposure.
 
@@ -35,7 +35,7 @@ Access only via LAN / WireGuard (vpn.sys-lab.xyz). No public exposure.
 2. `git clone` this repo to `/opt/media-srv` on the server.
 3. `cp .env.example .env` and edit (PUID/PGID/RENDER_GID/TZ).
 4. `./scripts/deploy.sh` — pulls images and starts the stack.
-5. First-run wiring inside the UIs (Prowlarr → qBittorrent → Sonarr/Radarr → Jellyfin → Overseerr): see [docs/SETUP.md](docs/SETUP.md).
+5. First-run wiring inside the UIs (Prowlarr → qBittorrent → Sonarr/Radarr → Jellyfin → Jellyseerr): see [docs/SETUP.md](docs/SETUP.md).
 
 ## Operations
 

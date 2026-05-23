@@ -7,7 +7,7 @@
 set -euo pipefail
 
 # --- config ---
-SERVICES=(jellyfin qbittorrent prowlarr sonarr radarr bazarr overseerr)
+SERVICES=(jellyfin qbittorrent prowlarr sonarr radarr bazarr jellyseerr)
 declare -A HTTP_PROBES=(
   [jellyfin]="http://127.0.0.1:8096/health"
   [qbittorrent]="http://127.0.0.1:8080/"
@@ -15,7 +15,7 @@ declare -A HTTP_PROBES=(
   [sonarr]="http://127.0.0.1:8989/ping"
   [radarr]="http://127.0.0.1:7878/ping"
   [bazarr]="http://127.0.0.1:6767/"
-  [overseerr]="http://127.0.0.1:5055/api/v1/status"
+  [jellyseerr]="http://127.0.0.1:5055/api/v1/status"
 )
 STATE_DIR="${STATE_DIR:-/var/tmp/media-srv-watchdog}"
 mkdir -p "$STATE_DIR"

@@ -29,7 +29,7 @@ echo 'HD_IDLE_OPTS="-i 0 -a sda -i 0"' | sudo tee /etc/default/hd-idle
 sudo systemctl enable --now hd-idle
 
 # Configs dir on NVMe
-sudo mkdir -p /opt/appdata/{jellyfin,sonarr,radarr,prowlarr,qbittorrent,bazarr,overseerr}
+sudo mkdir -p /opt/appdata/{jellyfin,sonarr,radarr,prowlarr,qbittorrent,bazarr,jellyseerr}
 sudo chown -R sykkyb:sykkyb /opt/appdata
 
 # VA-API for Jellyfin HW transcoding (Vega iGPU)
@@ -124,13 +124,13 @@ If VAAPI fails: drop back to software transcoding (uncheck hardware acceleration
 3. **Settings → Radarr** → connect to `radarr:7878` with API key.
 4. **Settings → Providers** → enable OpenSubtitles, Subscene, etc.
 
-### 4.7 Overseerr — http://192.168.100.5:5055
+### 4.7 Jellyseerr — http://192.168.100.5:5055
 
 1. Sign in with a Jellyfin user.
 2. Connect Sonarr (`sonarr:8989`) and Radarr (`radarr:7878`).
 3. Set default quality profiles and root folders.
 
-Done — request a movie/show in Overseerr → Radarr/Sonarr search via Prowlarr → qBittorrent downloads to `/mnt/media/downloads/complete/...` → *arr hardlinks to `/mnt/media/{movies,tv}/...` → Jellyfin picks it up.
+Done — request a movie/show in Jellyseerr → Radarr/Sonarr search via Prowlarr → qBittorrent downloads to `/mnt/media/downloads/complete/...` → *arr hardlinks to `/mnt/media/{movies,tv}/...` → Jellyfin picks it up.
 
 ## 5. Backup setup (one-off)
 
