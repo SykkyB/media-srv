@@ -17,20 +17,30 @@ Resource limits, healthchecks, and host-wide log rotation are wired up per [Otus
 
 Inside containers: `/mnt/media` is mounted as `/data` for *arr/qBit. Jellyfin sees `movies/` and `tv/` read-only.
 
-## Ports
+## Ports / URLs
 
-| Service     | Port |
-|-------------|------|
-| Jellyfin    | 8096 |
-| qBittorrent | 8080 |
-| Prowlarr    | 9696 |
-| Sonarr      | 8989 |
-| Radarr      | 7878 |
-| Bazarr      | 6767 |
-| Jellyseerr   | 5055 |
-| Searcharr   | — (Telegram-only, no HTTP) |
+| Service     | Direct (LAN)            | Pretty (via Caddy + LAN DNS)             |
+|-------------|-------------------------|------------------------------------------|
+| Jellyfin    | http://192.168.100.5:8096 | https://jellyfin.media.sys-lab.xyz     |
+| qBittorrent | http://192.168.100.5:8080 | https://qbit.media.sys-lab.xyz         |
+| Prowlarr    | http://192.168.100.5:9696 | https://prowlarr.media.sys-lab.xyz     |
+| Sonarr      | http://192.168.100.5:8989 | https://sonarr.media.sys-lab.xyz       |
+| Radarr      | http://192.168.100.5:7878 | https://radarr.media.sys-lab.xyz       |
+| Bazarr      | http://192.168.100.5:6767 | https://bazarr.media.sys-lab.xyz       |
+| Jellyseerr  | http://192.168.100.5:5055 | https://jellyseerr.media.sys-lab.xyz   |
+| Searcharr   | — (Telegram-only, no HTTP) | —                                      |
 
-Access only via LAN / WireGuard (vpn.sys-lab.xyz). No public exposure.
+The "pretty" URLs go through:
+
+```
+AdGuard Home on flint2 (DNS rewrite *.media.sys-lab.xyz → 192.168.100.5)
+   ↓
+Caddy on ryzen :443 (wildcard cert *.media.sys-lab.xyz from Let's Encrypt DNS-01 via Cloudflare)
+   ↓
+service on its localhost port
+```
+
+Access only via LAN / WireGuard (vpn.sys-lab.xyz). No public exposure — the pretty URLs resolve to 192.168.100.5 only inside the home network and over the WireGuard tunnel.
 
 ## Setup
 
