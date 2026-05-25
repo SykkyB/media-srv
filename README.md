@@ -112,7 +112,21 @@ First-run setup:
 
 What the default template does:
 
-- **Episode deletion enabled** — Janitorr deletes watched episodes older than 30 days (keeps last 10 unwatched).
-- **Free-space-based deletion off** — won't kick in just because the disk fills up; behavior is predictable.
-- **Tag-based deletion off** — opt in later if you want per-show retention via Sonarr tags (`janitorr_7d`, `janitorr_30d`).
-- **"Whole show" off** — deletes season-by-season, not entire shows in one go.
+- **Episode deletion** — for shows tagged `janitorr_episodes` in Sonarr, deletes episodes older than 30 days (keeps last 10 in the latest season). Until you tag at least one show, nothing happens.
+- **Tag-based deletion** — three retention tags (`janitorr_7d`, `janitorr_30d`, `janitorr_now`). Tag a show in Sonarr → after the matching TTL, Janitorr deletes via the *arr API.
+- **Free-space-based (`media-deletion`) — off**. Opt in later if disk pressure becomes a thing.
+- **Exclusion tag `janitorr_keep`** — applied to any show/movie in Sonarr/Radarr, prevents Janitorr from touching it.
+- **Jellyfin favorites excluded** (`exclude-favorited: true`) — anything you favorited in the Jellyfin UI is also safe.
+- **"Whole show" off** — deletes season-by-season, not entire series in one go.
+
+### Janitorr workflow — three real use cases
+
+| Goal | How |
+|------|-----|
+| Auto-prune long-running shows you watch weekly (e.g. South Park) | In Sonarr, tag the show with `janitorr_episodes`. After 30 days, old episodes age out, but always 10 latest are kept. |
+| Auto-cleanup one-shot series (you binge → done) | In Sonarr, tag with `janitorr_7d`. Watch it. 7 days after grab, files + Sonarr entry are gone. |
+| One-off bulk cleanup of already-watched seasons you don't need | Two options. **Cleanest:** Sonarr UI → Series → "Manage Episodes" → select seasons → Delete files. **Via Janitorr:** tag those shows with `janitorr_now` (TTL 1d), wait one cycle. |
+
+### About "delete watched" specifically
+
+Janitorr's `episode-deletion` is **age-based by default** — it uses Sonarr's grab history, not Jellyfin watch status. To make Janitorr respect what was actually watched, you'd run [Jellystat](https://github.com/CyferShepard/Jellystat) or Streamystats as an extra container and enable the corresponding section in `application.yml`. Without that, "delete X days after I watched it" isn't quite what happens — it's "delete X days after Sonarr grabbed it." For most shows the difference is small; for shows you sit on for months before watching, you'd want Jellystat. (Not adding it now; flag if you want it.)
