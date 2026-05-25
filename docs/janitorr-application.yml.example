@@ -1,0 +1,81 @@
+## Janitorr config template — copy to ${APPDATA}/janitorr/config/application.yml
+## and substitute API keys / URLs.
+##
+## Official template + all options:
+##   https://github.com/Schaka/janitorr/blob/master/src/main/resources/application-template.yml
+
+server:
+  port: 8978
+
+logging:
+  level:
+    root: INFO
+
+## Global toggles
+##   dry-run: true  -> log what WOULD be deleted, but do nothing. KEEP TRUE
+##                     until you've watched a few cycles and trust it.
+##   run-once:  true -> exit after one cycle (useful for testing)
+file-system:
+  access: true
+  validate-seeding: true
+  leaving-soon-dir: /data/leaving-soon
+  media-server-leaving-soon-dir: /data/leaving-soon
+  from-scratch: true
+
+application:
+  dry-run: true
+  run-once: false
+  whole-tv-show: false       # delete season-by-season, not entire show
+  whole-show-seeding-check: false
+  leaving-soon: 14d          # warn N days before deletion (used by leaving-soon collections)
+  media-deletion:
+    enabled: false           # free-space based deletion — off by default
+    movie-expiration:
+      5: 15d
+      10: 30d
+      15: 60d
+      20: 90d
+    season-expiration:
+      5: 15d
+      10: 30d
+      15: 60d
+      20: 90d
+  tag-based-deletion:
+    enabled: false
+    minimum-free-disk-percent: 100
+    schedules:
+      - tag: janitorr_7d
+        expiration: 7d
+      - tag: janitorr_30d
+        expiration: 30d
+  episode-deletion:
+    ## THIS is the bit you actually want: delete watched episodes after N days.
+    enabled: true
+    tag: janitorr
+    max-episodes: 10
+    max-age: 30d
+
+clients:
+  sonarr:
+    enabled: true
+    url: "http://sonarr:8989"
+    api-key: "PUT_SONARR_API_KEY_HERE"
+    delete-empty-shows: true
+  radarr:
+    enabled: true
+    url: "http://radarr:7878"
+    api-key: "PUT_RADARR_API_KEY_HERE"
+  jellyfin:
+    enabled: true
+    url: "http://jellyfin:8096"
+    api-key: "PUT_JELLYFIN_API_KEY_HERE"
+    username: "PUT_JELLYFIN_USERNAME_HERE"
+    password: "PUT_JELLYFIN_PASSWORD_HERE"
+    delete: true
+    leaving-soon-tv: ""
+    leaving-soon-movie: ""
+  jellyseerr:
+    enabled: true
+    url: "http://jellyseerr:5055"
+    api-key: "PUT_JELLYSEERR_API_KEY_HERE"
+    match-server: true

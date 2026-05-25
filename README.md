@@ -29,6 +29,7 @@ Inside containers: `/mnt/media` is mounted as `/data` for *arr/qBit. Jellyfin se
 | Bazarr      | http://192.168.100.5:6767 | https://bazarr.media.sys-lab.xyz       |
 | Jellyseerr  | http://192.168.100.5:5055 | https://jellyseerr.media.sys-lab.xyz   |
 | Searcharr   | — (Telegram-only, no HTTP) | —                                      |
+| Janitorr    | http://192.168.100.5:8978 | — (no UI, just `/actuator/health`)     |
 
 The "pretty" URLs go through:
 
@@ -70,6 +71,7 @@ Every container in `docker-compose.yml` has `deploy.resources.limits` (memory + 
 | prowlarr | 512M | 0.5 |
 | jellyseerr | 512M | 0.5 |
 | searcharr | 256M | 0.25 |
+| janitorr | 512M | 0.5 |
 
 Total ceiling ~10 GiB out of the 32 GiB host. Healthcheck `interval/timeout/retries/start_period` are shared via a YAML anchor (`x-healthcheck-defaults`). Jellyfin keeps its image's built-in healthcheck; Searcharr has no HTTP interface so it's container-state-only.
 
@@ -83,3 +85,34 @@ Docker log rotation is host-wide (`/etc/docker/daemon.json` — `max-size: 10m`,
 - `scripts/backup.sh` / `restic-init.sh` / `restore.sh` — restic against `/backup`.
 - `scripts/watchdog-check.sh` — health probe with Telegram alerts.
 - `docs/SETUP.md` — first-time setup steps and per-service wiring.
+- `docs/janitorr-application.yml.example` — Janitorr config template (see "Janitorr" below).
+
+## Janitorr — auto-cleanup of watched seasons / old media
+
+[Janitorr](https://github.com/Schaka/janitorr) talks to Sonarr / Radarr / Jellyfin / Jellyseerr and deletes media via their APIs, so the *arr DB stays in sync (no orphaned monitored episodes).
+
+First-run setup:
+
+1. **Create config dir on host:**
+   ```sh
+   sudo mkdir -p /opt/appdata/janitorr/{config,logs}
+   sudo chown -R "$(id -u):$(id -g)" /opt/appdata/janitorr
+   ```
+2. **Copy template:** `cp docs/janitorr-application.yml.example /opt/appdata/janitorr/config/application.yml`
+3. **Get API keys** and put them into `application.yml`:
+   - Sonarr / Radarr / Prowlarr / Bazarr: Settings → General → API Key
+   - Jellyfin: Dashboard → API Keys → "+"
+   - Jellyseerr: Settings → General → API Key
+4. **KEEP `dry-run: true`** for the first run. Tail logs and confirm what it WOULD delete looks sane:
+   ```sh
+   docker compose up -d janitorr
+   docker compose logs -f janitorr
+   ```
+5. Once you trust it, flip `dry-run: false` in `application.yml` and restart: `docker compose restart janitorr`.
+
+What the default template does:
+
+- **Episode deletion enabled** — Janitorr deletes watched episodes older than 30 days (keeps last 10 unwatched).
+- **Free-space-based deletion off** — won't kick in just because the disk fills up; behavior is predictable.
+- **Tag-based deletion off** — opt in later if you want per-show retention via Sonarr tags (`janitorr_7d`, `janitorr_30d`).
+- **"Whole show" off** — deletes season-by-season, not entire shows in one go.
