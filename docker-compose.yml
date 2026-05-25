@@ -221,7 +221,7 @@ services:
           memory: 64M
 
   janitorr:
-    image: ghcr.io/schaka/janitorr/janitorr-jvm-stable:latest
+    image: ghcr.io/schaka/janitorr:jvm-stable
     container_name: janitorr
     restart: unless-stopped
     user: ${PUID}:${PGID}
