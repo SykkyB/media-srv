@@ -9,6 +9,8 @@
 # reflects current state, not just history.
 set -euo pipefail
 
+[[ -f /var/tmp/media-srv-watchdog/.paused ]] && exit 0
+
 # --- config ---
 SERVICES=(jellyfin qbittorrent prowlarr sonarr radarr bazarr jellyseerr searcharr)
 declare -A HTTP_PROBES=(
