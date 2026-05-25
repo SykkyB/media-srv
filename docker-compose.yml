@@ -219,3 +219,28 @@ services:
           cpus: "0.25"
         reservations:
           memory: 64M
+
+  janitorr:
+    image: ghcr.io/schaka/janitorr/janitorr-jvm-stable:latest
+    container_name: janitorr
+    restart: unless-stopped
+    user: ${PUID}:${PGID}
+    environment:
+      - TZ=${TZ}
+      - JVM_ARGS=-Xmx256M
+    volumes:
+      - ${APPDATA}/janitorr/config:/config
+      - ${APPDATA}/janitorr/logs:/logs
+      - ${MEDIA}:/data
+    networks:
+      - media
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "wget -qO- --timeout=3 http://localhost:8978/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
