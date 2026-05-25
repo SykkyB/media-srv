@@ -3,6 +3,10 @@
 # Stops containers around the snapshot so SQLite DBs stay consistent.
 set -euo pipefail
 
+WATCHDOG_PAUSE="/var/tmp/media-srv-watchdog/.paused"
+touch "$WATCHDOG_PAUSE"
+trap "rm -f '$WATCHDOG_PAUSE'" EXIT
+
 REPO="${RESTIC_REPOSITORY:-/backup/restic-media-srv}"
 COMPOSE_DIR="${COMPOSE_DIR:-/opt/media-srv}"
 APPDATA="${APPDATA:-/opt/appdata}"
