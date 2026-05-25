@@ -1,35 +1,47 @@
 ## Janitorr config template — copy to ${APPDATA}/janitorr/config/application.yml
 ## and substitute API keys / URLs.
 ##
-## Official template + all options:
+## Canonical template + all options:
 ##   https://github.com/Schaka/janitorr/blob/master/src/main/resources/application-template.yml
-
-server:
-  port: 8978
+##
+## IMPORTANT: Janitorr deletes based on AGE (from Sonarr/Radarr grab history),
+## not based on "watched" status — unless you also run Jellystat or Streamystats
+## as a separate service. Episode-deletion in particular only touches shows that
+## have been TAGGED in Sonarr with the tag named in `episode-deletion.tag`.
 
 logging:
   level:
-    root: INFO
+    com.github.schaka: INFO
+  file:
+    name: "/logs/janitorr.log"
 
-## Global toggles
-##   dry-run: true  -> log what WOULD be deleted, but do nothing. KEEP TRUE
-##                     until you've watched a few cycles and trust it.
-##   run-once:  true -> exit after one cycle (useful for testing)
 file-system:
   access: true
   validate-seeding: true
-  leaving-soon-dir: /data/leaving-soon
-  media-server-leaving-soon-dir: /data/leaving-soon
+  leaving-soon-dir: "/data/leaving-soon"
+  media-server-leaving-soon-dir: "/data/leaving-soon"
   from-scratch: true
+  free-space-check-dir: "/data"
 
 application:
+  ## KEEP dry-run: true until you've watched a few cycles in the logs.
   dry-run: true
   run-once: false
-  whole-tv-show: false       # delete season-by-season, not entire show
+  whole-tv-show: false
   whole-show-seeding-check: false
-  leaving-soon: 14d          # warn N days before deletion (used by leaving-soon collections)
+  leaving-soon: 14d
+  leaving-soon-threshold-offset-percent: 5
+
+  ## Shows / movies tagged with any of these in Sonarr/Radarr are NEVER touched.
+  exclusion-tags:
+    - "janitorr_keep"
+
+  ## ----------------------------------------------------------------------
+  ## media-deletion: age-based cleanup that kicks in when disk fills up.
+  ## OFF by default — predictable behavior is better while you learn the tool.
+  ## ----------------------------------------------------------------------
   media-deletion:
-    enabled: false           # free-space based deletion — off by default
+    enabled: false
     movie-expiration:
       5: 15d
       10: 30d
@@ -39,32 +51,69 @@ application:
       5: 15d
       10: 30d
       15: 60d
-      20: 90d
+      20: 120d
+
+  ## ----------------------------------------------------------------------
+  ## tag-based-deletion: each tag gets its own TTL. Add the tag to a show
+  ## in Sonarr (Series → tag) and Janitorr deletes it after `expiration`
+  ## time has passed since the files were grabbed.
+  ##
+  ## minimum-free-disk-percent: 100 → always runs (no disk threshold gating).
+  ## Lower it (e.g. 30) if you only want tag-based cleanup when disk is
+  ## getting full.
+  ## ----------------------------------------------------------------------
   tag-based-deletion:
-    enabled: false
+    enabled: true
     minimum-free-disk-percent: 100
     schedules:
-      - tag: janitorr_7d
+      - tag: janitorr_7d         # short-lived (one-shot series)
         expiration: 7d
-      - tag: janitorr_30d
+      - tag: janitorr_30d        # keep ~a month
         expiration: 30d
+      - tag: janitorr_now        # used for one-off bulk cleanup — see README
+        expiration: 1d
+
+  ## ----------------------------------------------------------------------
+  ## episode-deletion: ONLY touches shows tagged with `tag:` below in Sonarr.
+  ## Keeps the latest `max-episodes` per LATEST season, plus deletes any
+  ## episode older than `max-age`.
+  ##
+  ## clean-older-seasons: true → entire OLDER seasons get deleted, keeping
+  ## only the latest season. Useful for "I only care about the current
+  ## season" type shows.
+  ## ----------------------------------------------------------------------
   episode-deletion:
-    ## THIS is the bit you actually want: delete watched episodes after N days.
     enabled: true
-    tag: janitorr
+    clean-older-seasons: false
+    tag: janitorr_episodes
     max-episodes: 10
     max-age: 30d
 
 clients:
+  default:
+    connect-timeout: 60s
+    read-timeout: 60s
+    level: NONE
+
   sonarr:
     enabled: true
     url: "http://sonarr:8989"
     api-key: "PUT_SONARR_API_KEY_HERE"
     delete-empty-shows: true
+    determine-age-by: MOST_RECENT
+    import-exclusions: false
+
   radarr:
     enabled: true
     url: "http://radarr:7878"
     api-key: "PUT_RADARR_API_KEY_HERE"
+    only-delete-files: false
+    determine-age-by: MOST_RECENT
+    import-exclusions: false
+
+  bazarr:
+    enabled: false
+
   jellyfin:
     enabled: true
     url: "http://jellyfin:8096"
@@ -72,10 +121,25 @@ clients:
     username: "PUT_JELLYFIN_USERNAME_HERE"
     password: "PUT_JELLYFIN_PASSWORD_HERE"
     delete: true
-    leaving-soon-tv: ""
-    leaving-soon-movie: ""
+    exclude-favorited: true       # 🟢 anything you favorited in Jellyfin won't be deleted
+    leaving-soon-tv: "Shows (Leaving Soon)"
+    leaving-soon-movies: "Movies (Leaving Soon)"
+    leaving-soon-type: MOVIES_AND_TV
+
   jellyseerr:
     enabled: true
     url: "http://jellyseerr:5055"
     api-key: "PUT_JELLYSEERR_API_KEY_HERE"
     match-server: true
+
+  ## Optional: enable Jellystat or Streamystats if you want Janitorr to respect
+  ## ACTUAL watch history (not just grab age). Without one of these enabled,
+  ## Janitorr makes age-only decisions.
+  jellystat:
+    enabled: false
+    whole-tv-show: false
+    url: "http://jellystat:3000"
+    api-key: "PUT_JELLYSTAT_API_KEY_HERE"
+
+  streamystats:
+    enabled: false
