@@ -99,6 +99,30 @@ services:
         reservations:
           memory: 128M
 
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    environment:
+      - LOG_LEVEL=info
+      - TZ=${TZ}
+    # Bind to loopback only: reachable by the host watchdog probe, not the LAN.
+    # Prowlarr reaches it in-network as http://flaresolverr:8191.
+    ports:
+      - 127.0.0.1:8191:8191
+    networks:
+      - media
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "curl -fsS --max-time 3 http://localhost:8191/health || exit 1"]
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 256M
+
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
