@@ -1,0 +1,18 @@
+# Homepage — top info widgets. Copy to /opt/appdata/homepage/widgets.yaml
+# Docs: https://gethomepage.dev/configs/info-widgets/
+- resources:
+    label: host
+    cpu: true
+    memory: true
+    # /app/config is on the NVMe (/opt/appdata) — shows the system disk.
+    disk: /app/config
+
+- search:
+    provider: duckduckgo
+    target: _blank
+
+- datetime:
+    text_size: xl
+    format:
+      timeStyle: short
+      dateStyle: short

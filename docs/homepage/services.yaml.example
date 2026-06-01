@@ -1,0 +1,121 @@
+# Homepage — services. Copy to /opt/appdata/homepage/services.yaml
+# Replace every PLACEHOLDER_* with the real API key (see "Where to get keys" below).
+#
+# Widget `url:` uses in-network container names (Homepage is on the `media` network),
+# so it talks to services directly — no need to expose anything extra.
+# `href:` is the pretty LAN/WireGuard URL opened when you click the tile.
+# `server:`/`container:` drive the live container status dot (via docker.yaml).
+#
+# Where to get keys:
+#   Sonarr/Radarr/Prowlarr/Bazarr : Settings → General → API Key
+#   Jellyfin                      : Dashboard → API Keys → "+"
+#   Seerr                         : Settings → General → API Key
+#   qBittorrent                   : WebUI login (username/password)
+# Docs: https://gethomepage.dev/configs/services/ + /widgets/
+
+- Media:
+    - Jellyfin:
+        icon: jellyfin.png
+        href: https://jellyfin.media.sys-lab.xyz
+        description: Movies & TV streaming
+        server: my-docker
+        container: jellyfin
+        widget:
+          type: jellyfin
+          url: http://jellyfin:8096
+          key: PLACEHOLDER_JELLYFIN_API_KEY
+          enableBlocks: true
+          enableNowPlaying: true
+
+    - Seerr:
+        icon: jellyseerr.png
+        href: https://seerr.media.sys-lab.xyz
+        description: Content requests
+        server: my-docker
+        container: seerr
+        widget:
+          # Seerr is API-compatible with Jellyseerr — use the jellyseerr widget type.
+          type: jellyseerr
+          url: http://seerr:5055
+          key: PLACEHOLDER_SEERR_API_KEY
+
+- Automation:
+    - Sonarr:
+        icon: sonarr.png
+        href: https://sonarr.media.sys-lab.xyz
+        description: TV shows
+        server: my-docker
+        container: sonarr
+        widget:
+          type: sonarr
+          url: http://sonarr:8989
+          key: PLACEHOLDER_SONARR_API_KEY
+          enableQueue: true
+
+    - Radarr:
+        icon: radarr.png
+        href: https://radarr.media.sys-lab.xyz
+        description: Movies
+        server: my-docker
+        container: radarr
+        widget:
+          type: radarr
+          url: http://radarr:7878
+          key: PLACEHOLDER_RADARR_API_KEY
+          enableQueue: true
+
+    - Prowlarr:
+        icon: prowlarr.png
+        href: https://prowlarr.media.sys-lab.xyz
+        description: Indexers
+        server: my-docker
+        container: prowlarr
+        widget:
+          type: prowlarr
+          url: http://prowlarr:9696
+          key: PLACEHOLDER_PROWLARR_API_KEY
+
+    - Bazarr:
+        icon: bazarr.png
+        href: https://bazarr.media.sys-lab.xyz
+        description: Subtitles
+        server: my-docker
+        container: bazarr
+        widget:
+          type: bazarr
+          url: http://bazarr:6767
+          key: PLACEHOLDER_BAZARR_API_KEY
+
+- Downloads & Tools:
+    - qBittorrent:
+        icon: qbittorrent.png
+        href: https://qbit.media.sys-lab.xyz
+        description: Torrent client
+        server: my-docker
+        container: qbittorrent
+        widget:
+          type: qbittorrent
+          url: http://qbittorrent:8080
+          username: PLACEHOLDER_QBIT_USER
+          password: PLACEHOLDER_QBIT_PASS
+
+    - FlareSolverr:
+        icon: mdi-cloud-lock
+        description: Cloudflare bypass (Prowlarr)
+        server: my-docker
+        container: flaresolverr
+        # No dashboard widget — proxy service. Status dot via docker only.
+
+    - Janitorr:
+        icon: mdi-broom
+        description: Auto-cleanup (age/tag based)
+        server: my-docker
+        container: janitorr
+        # No widget — REST/actuator only.
+
+    - Searcharr:
+        icon: mdi-robot
+        description: Telegram request bot
+        server: my-docker
+        container: searcharr
+        # Telegram-only, no HTTP UI.

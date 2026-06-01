@@ -1,0 +1,19 @@
+# Homepage — global settings. Copy to /opt/appdata/homepage/settings.yaml
+# Docs: https://gethomepage.dev/configs/settings/
+title: Home Media
+theme: dark
+color: slate
+headerStyle: clean
+hideVersion: true
+
+# Group layout / ordering on the dashboard.
+layout:
+  Media:
+    style: row
+    columns: 2
+  Automation:
+    style: row
+    columns: 4
+  Downloads & Tools:
+    style: row
+    columns: 4

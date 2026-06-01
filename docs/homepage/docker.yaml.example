@@ -1,0 +1,6 @@
+# Homepage — Docker integration. Copy to /opt/appdata/homepage/docker.yaml
+# Enables per-service container status (running/stopped) via the mounted socket.
+# The socket is mounted read-only in docker-compose.yml.
+# Docs: https://gethomepage.dev/configs/docker/
+my-docker:
+  socket: /var/run/docker.sock

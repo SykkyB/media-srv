@@ -1,0 +1,12 @@
+# Homepage — bookmarks. Copy to /opt/appdata/homepage/bookmarks.yaml
+# Docs: https://gethomepage.dev/configs/bookmarks/
+- Infra:
+    - TRaSH Guides:
+        - abbr: TG
+          href: https://trash-guides.info/
+    - Jellyfin Web:
+        - abbr: JF
+          href: https://jellyfin.media.sys-lab.xyz
+    - Seerr:
+        - abbr: SR
+          href: https://seerr.media.sys-lab.xyz
