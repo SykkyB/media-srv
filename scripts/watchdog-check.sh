@@ -12,7 +12,7 @@ set -euo pipefail
 [[ -f /var/tmp/media-srv-watchdog/.paused ]] && exit 0
 
 # --- config ---
-SERVICES=(jellyfin qbittorrent prowlarr flaresolverr sonarr radarr bazarr jellyseerr searcharr janitorr)
+SERVICES=(jellyfin qbittorrent prowlarr flaresolverr sonarr radarr bazarr seerr searcharr janitorr homepage)
 declare -A HTTP_PROBES=(
   [jellyfin]="http://127.0.0.1:8096/health"
   [qbittorrent]="http://127.0.0.1:8080/"
@@ -21,8 +21,9 @@ declare -A HTTP_PROBES=(
   [sonarr]="http://127.0.0.1:8989/ping"
   [radarr]="http://127.0.0.1:7878/ping"
   [bazarr]="http://127.0.0.1:6767/"
-  [jellyseerr]="http://127.0.0.1:5055/api/v1/status"
+  [seerr]="http://127.0.0.1:5055/api/v1/status"
   [janitorr]="http://127.0.0.1:8978/actuator/health"
+  [homepage]="http://127.0.0.1:3000/"
 )
 STATE_DIR="${STATE_DIR:-/var/tmp/media-srv-watchdog}"
 mkdir -p "$STATE_DIR"

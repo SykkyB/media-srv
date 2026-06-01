@@ -126,10 +126,13 @@ clients:
     leaving-soon-movies: "Movies (Leaving Soon)"
     leaving-soon-type: MOVIES_AND_TV
 
+  ## Janitorr's integration key is still named `jellyseerr` (Seerr is API-compatible
+  ## with Overseerr/Jellyseerr). Only the URL changed: container renamed jellyseerr → seerr.
+  ## The API key is preserved across the Seerr auto-migration, so reuse the existing one.
   jellyseerr:
     enabled: true
-    url: "http://jellyseerr:5055"
-    api-key: "PUT_JELLYSEERR_API_KEY_HERE"
+    url: "http://seerr:5055"
+    api-key: "PUT_SEERR_API_KEY_HERE"
     match-server: true
 
   ## Optional: enable Jellystat or Streamystats if you want Janitorr to respect

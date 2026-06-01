@@ -201,17 +201,22 @@ services:
         reservations:
           memory: 128M
 
-  jellyseerr:
-    image: fallenbagel/jellyseerr:latest
-    container_name: jellyseerr
+  # Seerr — official successor to Overseerr + Jellyseerr (both deprecated 2025).
+  # Auto-migrates the Jellyseerr DB on first start. Runs as node user (UID 1000),
+  # so ${APPDATA}/seerr must be owned 1000:1000 — see docs/SETUP.md migration steps.
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    container_name: seerr
     restart: unless-stopped
+    init: true
     environment:
       - LOG_LEVEL=info
       - TZ=${TZ}
+      - PORT=5055
     ports:
       - 5055:5055
     volumes:
-      - ${APPDATA}/jellyseerr:/app/config
+      - ${APPDATA}/seerr:/app/config
     networks:
       - media
     healthcheck:
@@ -224,6 +229,37 @@ services:
           cpus: "0.5"
         reservations:
           memory: 128M
+
+  # Homepage — single dashboard for the whole stack (status + widgets).
+  # docker.sock is mounted read-only for the container-status widget; this grants
+  # near-root host access, acceptable here since the stack is LAN/WireGuard-only.
+  # Harden later with docker-socket-proxy if exposing beyond the home network.
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - HOMEPAGE_ALLOWED_HOSTS=homepage.media.sys-lab.xyz,${SERVER_IP}:3000
+    ports:
+      - 3000:3000
+    volumes:
+      - ${APPDATA}/homepage:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - media
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "wget -qO- --timeout=3 http://localhost:3000/ >/dev/null || exit 1"]
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+        reservations:
+          memory: 64M
 
   searcharr:
     image: toddrob/searcharr:latest

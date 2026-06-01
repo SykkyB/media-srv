@@ -1,6 +1,6 @@
 # media-srv
 
-Self-hosted media stack on `home-server` (Ryzen 4700U): Jellyfin + Sonarr/Radarr/Prowlarr/Bazarr + qBittorrent + Jellyseerr + Searcharr.
+Self-hosted media stack on `home-server` (Ryzen 4700U): Jellyfin + Sonarr/Radarr/Prowlarr/Bazarr + qBittorrent + Seerr + Searcharr + Janitorr, fronted by a Homepage dashboard.
 
 Configs on NVMe (`/opt/appdata`), media on WD My Passport 2TB mounted at `/mnt/media` (ext4). Single filesystem under `/mnt/media` so Sonarr/Radarr can hardlink instead of copy.
 
@@ -27,9 +27,10 @@ Inside containers: `/mnt/media` is mounted as `/data` for *arr/qBit. Jellyfin se
 | Sonarr      | http://192.168.100.5:8989 | https://sonarr.media.sys-lab.xyz       |
 | Radarr      | http://192.168.100.5:7878 | https://radarr.media.sys-lab.xyz       |
 | Bazarr      | http://192.168.100.5:6767 | https://bazarr.media.sys-lab.xyz       |
-| Jellyseerr  | http://192.168.100.5:5055 | https://jellyseerr.media.sys-lab.xyz   |
+| Seerr       | http://192.168.100.5:5055 | https://seerr.media.sys-lab.xyz        |
 | Searcharr   | — (Telegram-only, no HTTP) | —                                      |
 | Janitorr    | http://192.168.100.5:8978 | — (no UI, just `/actuator/health`)     |
+| Homepage    | http://192.168.100.5:3000 | https://homepage.media.sys-lab.xyz     |
 
 The "pretty" URLs go through:
 
@@ -49,7 +50,19 @@ Access only via LAN / WireGuard (vpn.sys-lab.xyz). No public exposure — the pr
 2. `git clone` this repo to `/opt/media-srv` on the server.
 3. `cp .env.example .env` and edit (PUID/PGID/RENDER_GID/TZ).
 4. `./scripts/deploy.sh` — pulls images and starts the stack.
-5. First-run wiring inside the UIs (Prowlarr → qBittorrent → Sonarr/Radarr → Jellyfin → Jellyseerr): see [docs/SETUP.md](docs/SETUP.md).
+5. First-run wiring inside the UIs (Prowlarr → qBittorrent → Sonarr/Radarr → Jellyfin → Seerr): see [docs/SETUP.md](docs/SETUP.md).
+
+> **Migrating from Jellyseerr → Seerr.** Seerr (`ghcr.io/seerr-team/seerr`) is the official successor to the now-deprecated Overseerr/Jellyseerr and auto-migrates the existing DB on first start. To keep a rollback, this compose points Seerr at a **new** config dir (`/opt/appdata/seerr`) rather than reusing `jellyseerr/`:
+>
+> ```sh
+> docker compose stop jellyseerr 2>/dev/null || true        # if the old one is still up
+> sudo cp -a /opt/appdata/jellyseerr /opt/appdata/seerr      # copy DB so Jellyseerr stays intact for rollback
+> sudo chown -R 1000:1000 /opt/appdata/seerr                 # Seerr runs as node user UID 1000
+> docker compose up -d seerr                                 # first start runs the auto-migration
+> docker compose logs -f seerr                               # confirm "migration" completes, then check :5055
+> ```
+>
+> Migration is irreversible *on the migrated copy* — that's why we work on `seerr/`, not in place. Once Seerr is verified, the old `jellyseerr/` dir can be deleted.
 
 ## Operations
 
@@ -69,11 +82,12 @@ Every container in `docker-compose.yml` has `deploy.resources.limits` (memory + 
 | radarr | 1G | 1.0 |
 | bazarr | 768M | 0.5 |
 | prowlarr | 512M | 0.5 |
-| jellyseerr | 512M | 0.5 |
+| seerr | 512M | 0.5 |
 | searcharr | 256M | 0.25 |
 | janitorr | 512M | 0.5 |
+| homepage | 256M | 0.5 |
 
-Total ceiling ~10 GiB out of the 32 GiB host. Healthcheck `interval/timeout/retries/start_period` are shared via a YAML anchor (`x-healthcheck-defaults`). Jellyfin keeps its image's built-in healthcheck; Searcharr has no HTTP interface so it's container-state-only.
+Total ceiling ~10.25 GiB out of the 32 GiB host. Healthcheck `interval/timeout/retries/start_period` are shared via a YAML anchor (`x-healthcheck-defaults`). Jellyfin keeps its image's built-in healthcheck; Searcharr has no HTTP interface so it's container-state-only.
 
 Docker log rotation is host-wide (`/etc/docker/daemon.json` — `max-size: 10m`, `max-file: 3`), applies to this stack and the other Docker stacks on the host.
 
