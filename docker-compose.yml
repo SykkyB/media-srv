@@ -240,13 +240,13 @@ services:
     restart: unless-stopped
     environment:
       - PUID=${PUID}
-      - PGID=${PGID}
+      # Run with the host `docker` group as PRIMARY gid so the socket
+      # (root:docker 660) is readable. The image's gosu drop to PUID strips
+      # supplementary groups, so `group_add` doesn't survive — setting PGID
+      # directly does. GID via: getent group docker
+      - PGID=${DOCKER_GID}
       - TZ=${TZ}
       - HOMEPAGE_ALLOWED_HOSTS=homepage.media.sys-lab.xyz,${SERVER_IP}:3000
-    # Join the host's `docker` group so the UID-1000 process can read the socket
-    # (owned root:docker 660). Find the GID with: getent group docker
-    group_add:
-      - ${DOCKER_GID}
     ports:
       - 3000:3000
     volumes:
