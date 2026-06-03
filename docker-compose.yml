@@ -300,7 +300,7 @@ services:
       - media
     healthcheck:
       <<: *healthcheck-defaults
-      test: ["CMD-SHELL", "wget -qO- --timeout=3 http://localhost:8978/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      test: ["CMD-SHELL", "grep -qa JanitorrApplication /proc/*/cmdline || exit 1"]
     deploy:
       resources:
         limits:
