@@ -29,7 +29,7 @@ cd "$COMPOSE_DIR"
 echo "==> stopping stack for consistent snapshot"
 docker compose stop
 
-trap 'echo "==> bringing stack back up"; docker compose start' EXIT
+trap 'echo "==> bringing stack back up"; docker compose up -d; rm -f "$WATCHDOG_PAUSE"' EXIT
 
 echo "==> restic backup $APPDATA"
 restic backup "$APPDATA" \

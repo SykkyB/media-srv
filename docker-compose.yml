@@ -269,6 +269,11 @@ services:
     image: toddrob/searcharr:latest
     container_name: searcharr
     restart: unless-stopped
+    depends_on:
+      sonarr:
+        condition: service_healthy
+      radarr:
+        condition: service_healthy
     environment:
       - TZ=${TZ}
     volumes:
