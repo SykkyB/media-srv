@@ -29,7 +29,7 @@ Inside containers: `/mnt/media` is mounted as `/data` for *arr/qBit. Jellyfin se
 | Bazarr      | http://192.168.100.5:6767 | https://bazarr.media.sys-lab.xyz       |
 | Seerr       | http://192.168.100.5:5055 | https://seerr.media.sys-lab.xyz        |
 | Searcharr   | — (Telegram-only, no HTTP) | —                                      |
-| Janitorr    | http://192.168.100.5:8978 | — (no UI, just `/actuator/health`)     |
+| Janitorr    | — (no web server)         | — (scheduler only, no UI/HTTP)         |
 | Homepage    | http://192.168.100.5:3000 | https://homepage.media.sys-lab.xyz     |
 
 The "pretty" URLs go through:
@@ -87,7 +87,7 @@ Every container in `docker-compose.yml` has `deploy.resources.limits` (memory + 
 | janitorr | 512M | 0.5 |
 | homepage | 256M | 0.5 |
 
-Total ceiling ~10.25 GiB out of the 32 GiB host. Healthcheck `interval/timeout/retries/start_period` are shared via a YAML anchor (`x-healthcheck-defaults`). Jellyfin keeps its image's built-in healthcheck; Searcharr has no HTTP interface so it's container-state-only.
+Total ceiling ~10.25 GiB out of the 32 GiB host. Healthcheck `interval/timeout/retries/start_period` are shared via a YAML anchor (`x-healthcheck-defaults`). Jellyfin keeps its image's built-in healthcheck; Searcharr has no HTTP interface so it's container-state-only. **Janitorr** (jvm-stable) runs as a scheduler and does *not* start a web server (nothing listens on 8978), so its healthcheck is process-liveness: `grep -qa JanitorrApplication /proc/*/cmdline`.
 
 Docker log rotation is host-wide (`/etc/docker/daemon.json` — `max-size: 10m`, `max-file: 3`), applies to this stack and the other Docker stacks on the host.
 
