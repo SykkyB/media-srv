@@ -280,7 +280,13 @@ services:
       - ${APPDATA}/searcharr:/app/data
     networks:
       - media
-    # No HTTP interface — relying on docker's "running" state via watchdog.
+    # No HTTP UI of its own. Searcharr connects to Sonarr/Radarr only once at
+    # startup, so probe that reachability for a meaningful health state — it goes
+    # red exactly when the condition that breaks the bot (arr unreachable) occurs,
+    # instead of the misleading always-green "container running".
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "python3 -c 'import socket; socket.create_connection((\"sonarr\",8989),3); socket.create_connection((\"radarr\",7878),3)'"]
     deploy:
       resources:
         limits:
