@@ -269,6 +269,19 @@ services:
     image: toddrob/searcharr:latest
     container_name: searcharr
     restart: unless-stopped
+    # Searcharr connects to Sonarr/Radarr only ONCE at startup and never
+    # reconnects. depends_on:service_healthy only orders `compose up` — on host
+    # reboot dockerd restarts all containers in parallel and ignores it, so the
+    # bot raced *arr and went silent after every reboot. Waiting for *arr INSIDE
+    # the container covers every start path (boot, deploy, backup, restart).
+    command:
+      - sh
+      - -c
+      - |
+        until python3 -c 'import socket; socket.create_connection(("sonarr",8989),3); socket.create_connection(("radarr",7878),3)' 2>/dev/null; do
+          echo "waiting for sonarr/radarr..."; sleep 3
+        done
+        exec python3 searcharr.py
     depends_on:
       sonarr:
         condition: service_healthy
