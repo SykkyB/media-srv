@@ -21,7 +21,7 @@ declare -A HTTP_PROBES=(
   [sonarr]="http://127.0.0.1:8989/ping"
   [radarr]="http://127.0.0.1:7878/ping"
   [bazarr]="http://127.0.0.1:6767/"
-  [seerr]="http://127.0.0.1:5055/api/v1/status"
+  [seerr]="http://127.0.0.1:5055/api/v1/status/appdata"
   [janitorr]="http://127.0.0.1:8978/actuator/health"
   [homepage]="http://127.0.0.1:3000/"
 )
