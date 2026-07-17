@@ -80,6 +80,11 @@ get_state() { cat "${STATE_DIR}/${1}.state" 2>/dev/null || echo "ok"; }
 # Args: 1=svc, 2=new_state (ok|down|warn), 3=detail (used in alerts)
 transition() {
   local svc="$1" new="$2" detail="$3"
+  # backup.sh's cron fires the same second as ours and pauses us via this
+  # file; re-check here (not just at startup) so a pause that appeared
+  # mid-run neither alerts nor writes state (a "down" written now would
+  # produce a bogus "recovered" on the next run)
+  [[ -f "${STATE_DIR}/.paused" ]] && exit 0
   local old; old="$(get_state "$svc")"
   # always refresh state so the dir always shows current state
   set_state "$svc" "$new"
