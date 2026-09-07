@@ -368,18 +368,27 @@ def cmd_execute(a):
 
 
 def cmd_sync(a):
+    """rsync архива на ryzen; с --run дополнительно (если на ryzen есть файл ключа) — скан библиотеки и альбомы.
+    Ключ читается на самом ryzen (cat в подшелле), на Mac и в вывод не попадает."""
     rs = ['rsync', '-a', '--exclude=.DS_Store', '--exclude=._*', a.archive.rstrip('/') + '/', f'{a.host}:{a.remote}/']
-    lib = a.library
+    remote = (f'K=$(cat {a.key_file}) || exit 3; '
+              f'curl -sf -X POST -H "x-api-key: $K" http://localhost:2283/api/libraries/{a.library}/scan && echo "scan queued"; '
+              f'docker run --rm --network immich_default -e API_URL=http://immich-server:2283/api -e API_KEY=$K '
+              f'-e ROOT_PATH={a.remote} -e ALBUM_LEVELS=1 salvoxia/immich-folder-album-creator:latest 2>&1 | tail -5')
     print('# 1. долить зеркало на ryzen:')
     print(' '.join(rs))
-    print('# 2. скан external library (или ждать ночной cron Immich):')
-    print(f"ssh {a.host} 'curl -s -X POST -H \"x-api-key: $IMMICH_KEY\" http://localhost:2283/api/libraries/{lib}/scan'")
-    print('# 3. альбомы из папок:')
-    print(f"ssh {a.host} 'docker run --rm --network immich_default -e API_URL=http://immich-server:2283/api "
-          f"-e API_KEY=$IMMICH_KEY -e ROOT_PATH={a.remote} -e ALBUM_LEVELS=1 salvoxia/immich-folder-album-creator:latest'")
+    print(f'# 2+3. скан external library + альбомы из папок (ключ dji-library лежит на ryzen в {a.key_file}, chmod 600):')
+    print(f"ssh {a.host} '{remote}'")
     if a.run:
-        log('running rsync...')
-        sys.exit(subprocess.call(rs))
+        log('rsync...')
+        rc = subprocess.call(rs)
+        if rc:
+            sys.exit(rc)
+        log('immich scan + albums...')
+        rc = subprocess.call(['ssh', a.host, remote])
+        if rc == 3:
+            log(f'нет файла ключа {a.key_file} на {a.host} — скан/альбомы пропущены (см. HOME-INFRA §6.8)')
+        sys.exit(rc)
 
 
 def main():
@@ -400,7 +409,8 @@ def main():
     x.add_argument('--host', default='ryzen4700')
     x.add_argument('--remote', default='/mnt/media/DJI')
     x.add_argument('--library', default='3e4a2765-bb9f-45ea-b8d7-134d932f2147')
-    x.add_argument('--run', action='store_true')
+    x.add_argument('--key-file', default='/srv/immich/.dji-library.key', help='файл с API-ключом Immich на хосте ryzen')
+    x.add_argument('--run', action='store_true', help='выполнить rsync, затем скан и альбомы (если есть файл ключа)')
     x.set_defaults(fn=cmd_sync)
     a = p.parse_args()
     a.fn(a)
