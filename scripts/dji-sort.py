@@ -371,10 +371,14 @@ def cmd_sync(a):
     """rsync архива на ryzen; с --run дополнительно (если на ryzen есть файл ключа) — скан библиотеки и альбомы.
     Ключ читается на самом ryzen (cat в подшелле), на Mac и в вывод не попадает."""
     rs = ['rsync', '-a', '--exclude=.DS_Store', '--exclude=._*', a.archive.rstrip('/') + '/', f'{a.host}:{a.remote}/']
+    psql = 'docker exec immich_postgres psql -U postgresimi -d immich -tAc'
+    cnt = f'{psql} "select count(*) from asset where \\"libraryId\\"=\'{a.library}\' and \\"deletedAt\\" is null"'
     remote = (f'K=$(cat {a.key_file}) || exit 3; '
               f'curl -sf -X POST -H "x-api-key: $K" http://localhost:2283/api/libraries/{a.library}/scan && echo "scan queued"; '
+              # скан асинхронный: ждём, пока число ассетов библиотеки перестанет расти (2 замера подряд без изменений)
+              f'prev=-1; same=0; for i in $(seq 1 60); do n=$({cnt}); if [ "$n" = "$prev" ]; then same=$((same+1)); [ $same -ge 2 ] && break; else same=0; fi; prev=$n; sleep 5; done; echo "library assets: $n"; '
               f'docker run --rm --network immich_default -e API_URL=http://immich-server:2283/api -e API_KEY=$K '
-              f'-e ROOT_PATH={a.remote} -e ALBUM_LEVELS=1 salvoxia/immich-folder-album-creator:latest 2>&1 | tail -5')
+              f'-e ROOT_PATH={a.remote} -e ALBUM_LEVELS=1 -e UNATTENDED=1 salvoxia/immich-folder-album-creator:latest 2>&1 | grep -i "album\\|added\\|error" | tail -5')
     print('# 1. долить зеркало на ryzen:')
     print(' '.join(rs))
     print(f'# 2+3. скан external library + альбомы из папок (ключ dji-library лежит на ryzen в {a.key_file}, chmod 600):')
